@@ -37,20 +37,16 @@ public class Server extends ReceiverAdapter {
     public void receive(Message msg) {
         if(msg.getObject().toString().equals("Me enviem os arquivos")){
             
-        }else{
-            String[] aux = msg.getObject().toString().split(" from ");
-            File arquivo = new File(aux[0]);
-            File newFile = new File("Servidores/"+name+"/"+aux[1]+"/"+arquivo.getName());
-            File diretorio = new File("Servidores/"+name+"/"+aux[1]);
+        }else if(msg.getObject() instanceof Arquivo){
+            Arquivo arquivo = msg.getObject();
+            File newFile = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
+            File diretorio = new File("Servidores/"+name+"/"+msg.src());
             diretorio.mkdirs();
             try {
-                FileInputStream inputStream = new FileInputStream(arquivo);
                 FileOutputStream outputStream = new FileOutputStream(newFile);
-                byte[] bs = new byte[(int) arquivo.length()];
-                int line = 0;
-                while((line=inputStream.read(bs)) != -1){
-                    outputStream.write(bs, 0, line);
-                }
+                byte[] bs = arquivo.arquivo;
+                outputStream.write(bs, 0, bs.length);
+                outputStream.close();
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

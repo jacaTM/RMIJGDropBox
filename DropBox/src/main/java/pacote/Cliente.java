@@ -1,7 +1,10 @@
 package pacote;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.Scanner;
+
+import com.google.gson.Gson;
 
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -33,10 +36,16 @@ public class Cliente extends ReceiverAdapter{
             System.out.println("Digite o caminho do arquivo");
             Scanner sc = new Scanner(System.in);
             String file = sc.nextLine();
-            File aux = new File(file);
-            if(aux.exists()){
-                Message msg = new Message(null, (file+" from "+name));
+            File arquivo = new File(file);
+            if(arquivo.exists()){
+                FileInputStream inputStream = new FileInputStream(arquivo);
+                byte[] bs = new byte[(int) arquivo.length()];
+                inputStream.read(bs);
+                Arquivo aux = new Arquivo(bs,arquivo.getName());
+                Message msg = new Message(null, aux);
                 channel.send(msg);
+                inputStream.close();
+                sc.close();
             }else{
                 System.out.println("Arquivo não existe");
             }
