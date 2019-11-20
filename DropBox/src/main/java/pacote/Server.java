@@ -39,20 +39,25 @@ public class Server extends ReceiverAdapter {
             
         }else if(msg.getObject() instanceof Arquivo){
             Arquivo arquivo = msg.getObject();
-            File newFile = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
-            File diretorio = new File("Servidores/"+name+"/"+msg.src());
-            diretorio.mkdirs();
-            try {
-                FileOutputStream outputStream = new FileOutputStream(newFile);
-                byte[] bs = arquivo.arquivo;
-                outputStream.write(bs, 0, bs.length);
-                outputStream.close();
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            if(arquivo.diretorio==true){
+                File diretorio = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
+                diretorio.mkdirs();
+            }else{
+                File newFile = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
+                File diretorio = new File("Servidores/"+name+"/"+msg.src());
+                diretorio.mkdirs();
+                try {
+                    FileOutputStream outputStream = new FileOutputStream(newFile);
+                    byte[] bs = arquivo.arquivo;
+                    outputStream.write(bs, 0, bs.length);
+                    outputStream.close();
+                } catch (FileNotFoundException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
             }
         }
     }
