@@ -40,6 +40,26 @@ public class Cliente extends ReceiverAdapter {
             channel.setName(name);
             channel.connect("ClienteServidor");
             channel.setReceiver(this);
+            new Thread(){
+                @Override
+                public void run(){
+                    while(true){
+                        System.out.println("Digite logout a qualquer momento para deslogar");
+                        System.out.println("Ou digite sair para sair");
+                        Scanner sc = new Scanner(System.in);
+                        String escolha = sc.nextLine();
+                        switch (escolha){
+                            case "logout":
+                                channel.close();
+                                main(null);
+                                break;
+                            case "sair":
+                                System.exit(0);
+                                break;
+                        }
+                    }
+                }
+            }.start();
             watching();
             channel.close();
         } catch (Exception e) {
@@ -47,18 +67,29 @@ public class Cliente extends ReceiverAdapter {
     }
 
     public void receive(Message msg) {
-        System.out.println(msg.getObject().toString());
-        if(msg.getObject().toString().equals("Me enviem os arquivos")){
-            File diretorio = new File("Clientes/"+name);
-            sendToServer(diretorio);
-        }
+        
     }
 
-    public void sendToServer(File diretorio){
-        File afile[] = diretorio.listFiles();
+    public void criarDiretorio(File diretorio) throws Exception {
+        File[] afile = diretorio.listFiles();
         for(int i=0;i<afile.length;i++){
-            System.out.println(afile[i].toString());
+            if(afile[i].isFile()){
+                FileInputStream inputStream = new FileInputStream(afile[i]);
+                byte[] bs = new byte[(int) afile[i].length()];
+                inputStream.read(bs);
+                String[] aux2 = afile[i].toString().split("Clientes/");
+                Arquivo aux = new Arquivo(bs, aux2[1], false,100);
+                Message msg = new Message(null, aux);
+                channel.send(msg);
+                inputStream.close();
+            }else{
+                criarDiretorio(afile[i]);
+            }
         }
+        String[] aux2 = diretorio.toString().split("Clientes/");
+        Arquivo aux3 = new Arquivo(null, aux2[1], true,100);
+        Message msg = new Message(null, aux3);
+        channel.send(msg);
     }
 
     public void viewAccepted(View new_view) {
@@ -66,7 +97,7 @@ public class Cliente extends ReceiverAdapter {
     }
 
     public void watching() throws Exception {
-        Path path = Paths.get("Clientes/" + name);
+        Path path = Paths.get("Clientes");
         watcher = FileSystems.getDefault().newWatchService();
         keys = new HashMap<WatchKey, Path>();
         walkAndRegisterDirectories(path);
@@ -98,22 +129,26 @@ public class Cliente extends ReceiverAdapter {
                     try {
                         if (Files.isDirectory(child)) {
                             walkAndRegisterDirectories(child);
+                            criarDiretorio(child.toFile());
                         }else{
                             File arquivo = new File(child.toString());
-                            if (arquivo.exists()) {
-                                FileInputStream inputStream = new FileInputStream(arquivo);
-                                byte[] bs = new byte[(int) arquivo.length()];
-                                inputStream.read(bs);
-                                String[] aux2 = child.toString().split("Clientes/"+name+"/");
-                                Arquivo aux = new Arquivo(bs, aux2[1], false,100);
-                                Message msg = new Message(null, aux);
-                                channel.send(msg);
-                                inputStream.close();
-                            }
+                            FileInputStream inputStream = new FileInputStream(arquivo);
+                            byte[] bs = new byte[(int) arquivo.length()];
+                            inputStream.read(bs);
+                            String[] aux2 = child.toString().split("Clientes/");
+                            Arquivo aux = new Arquivo(bs, aux2[1], false,100);
+                            Message msg = new Message(null, aux);
+                            channel.send(msg);
+                            inputStream.close();
                         }
                     } catch (IOException x) {
                         // do something useful
                     }
+                }else if(kind == ENTRY_DELETE){
+                    String[] aux2 = child.toString().split("Clientes/");
+                    Arquivo aux = new Arquivo(null, aux2[1], false,300);
+                    Message msg = new Message(null, aux);
+                    channel.send(msg);
                 }
             }
 
@@ -150,21 +185,15 @@ public class Cliente extends ReceiverAdapter {
     {
         WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
         keys.put(key, dir);
-        if(!dir.toString().equals("Clientes/"+name)){
-            String[] aux = dir.toString().split("Clientes/"+name+"/");
-            Arquivo arquivoAux = new Arquivo(null,aux[1],true,100);
-            Message msg = new Message(null, arquivoAux);
-            channel.send(msg);
-        }
     }
     public static void main(String[] args) {
         System.out.println("Qual seu nome?");
         Scanner sc = new Scanner(System.in);
         String name = sc.nextLine();
-        File cl = new File("Clientes/"+name);
+        File cl = new File("Clientes");
         if(cl.mkdirs()){
             System.out.println("Diretorio criado");
-        }else System.out.println("Usuario existente");
+        }
         Cliente cliente = new Cliente(name);
         cliente.await();
         sc.close();
