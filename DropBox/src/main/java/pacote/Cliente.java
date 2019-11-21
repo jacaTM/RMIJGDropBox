@@ -40,26 +40,6 @@ public class Cliente extends ReceiverAdapter {
             channel.setName(name);
             channel.connect("ClienteServidor");
             channel.setReceiver(this);
-            new Thread(){
-                @Override
-                public void run(){
-                    while(true){
-                        System.out.println("Digite logout a qualquer momento para deslogar");
-                        System.out.println("Ou digite sair para sair");
-                        Scanner sc = new Scanner(System.in);
-                        String escolha = sc.nextLine();
-                        switch (escolha){
-                            case "logout":
-                                channel.close();
-                                main(null);
-                                break;
-                            case "sair":
-                                System.exit(0);
-                                break;
-                        }
-                    }
-                }
-            }.start();
             watching();
             channel.close();
         } catch (Exception e) {
