@@ -1,7 +1,6 @@
 package pacote;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,7 +23,7 @@ public class Server extends ReceiverAdapter {
         channel.setName(name);
         channel.connect("ClienteServidor");
         Message msg = new Message(null,"Me enviem os arquivos");
-        channel.send(null,msg);
+        channel.send(msg);
     }
 
     public void raise(String name) {
@@ -35,28 +34,28 @@ public class Server extends ReceiverAdapter {
     }
 
     public void receive(Message msg) {
-        if(msg.getObject().toString().equals("Me enviem os arquivos")){
-            
-        }else if(msg.getObject() instanceof Arquivo){
+        if(msg.getObject() instanceof Arquivo){
             Arquivo arquivo = msg.getObject();
-            if(arquivo.diretorio==true){
-                File diretorio = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
-                diretorio.mkdirs();
-            }else{
-                File newFile = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
-                File diretorio = new File("Servidores/"+name+"/"+msg.src());
-                diretorio.mkdirs();
-                try {
-                    FileOutputStream outputStream = new FileOutputStream(newFile);
-                    byte[] bs = arquivo.arquivo;
-                    outputStream.write(bs, 0, bs.length);
-                    outputStream.close();
-                } catch (FileNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+            if(arquivo.codigo==100){
+                if(arquivo.diretorio==true){
+                    File diretorio = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
+                    diretorio.mkdirs();
+                }else{
+                    File newFile = new File("Servidores/"+name+"/"+msg.src()+"/"+arquivo.nome);
+                    File diretorio = new File("Servidores/"+name+"/"+msg.src());
+                    diretorio.mkdirs();
+                    try {
+                        FileOutputStream outputStream = new FileOutputStream(newFile);
+                        byte[] bs = arquivo.arquivo;
+                        outputStream.write(bs, 0, bs.length);
+                        outputStream.close();
+                    } catch (FileNotFoundException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
                 }
             }
         }

@@ -39,6 +39,7 @@ public class Cliente extends ReceiverAdapter {
             channel = new JChannel();
             channel.setName(name);
             channel.connect("ClienteServidor");
+            channel.setReceiver(this);
             watching();
             channel.close();
         } catch (Exception e) {
@@ -47,31 +48,21 @@ public class Cliente extends ReceiverAdapter {
 
     public void receive(Message msg) {
         System.out.println(msg.getObject().toString());
+        if(msg.getObject().toString().equals("Me enviem os arquivos")){
+            File diretorio = new File("Clientes/"+name);
+            sendToServer(diretorio);
+        }
+    }
+
+    public void sendToServer(File diretorio){
+        File afile[] = diretorio.listFiles();
+        for(int i=0;i<afile.length;i++){
+            System.out.println(afile[i].toString());
+        }
     }
 
     public void viewAccepted(View new_view) {
         System.out.println("** view: " + new_view);
-    }
-
-    public void eventLoop(String name) throws Exception {
-        while (true) {
-            System.out.println("Digite o caminho do arquivo");
-            Scanner sc = new Scanner(System.in);
-            String file = sc.nextLine();
-            File arquivo = new File(file);
-            if (arquivo.exists()) {
-                FileInputStream inputStream = new FileInputStream(arquivo);
-                byte[] bs = new byte[(int) arquivo.length()];
-                inputStream.read(bs);
-                Arquivo aux = new Arquivo(bs, arquivo.getName(), false);
-                Message msg = new Message(null, aux);
-                channel.send(msg);
-                inputStream.close();
-                sc.close();
-            } else {
-                System.out.println("Arquivo não existe");
-            }
-        }
     }
 
     public void watching() throws Exception {
@@ -107,6 +98,18 @@ public class Cliente extends ReceiverAdapter {
                     try {
                         if (Files.isDirectory(child)) {
                             walkAndRegisterDirectories(child);
+                        }else{
+                            File arquivo = new File(child.toString());
+                            if (arquivo.exists()) {
+                                FileInputStream inputStream = new FileInputStream(arquivo);
+                                byte[] bs = new byte[(int) arquivo.length()];
+                                inputStream.read(bs);
+                                String[] aux2 = child.toString().split("Clientes/"+name+"/");
+                                Arquivo aux = new Arquivo(bs, aux2[1], false,100);
+                                Message msg = new Message(null, aux);
+                                channel.send(msg);
+                                inputStream.close();
+                            }
                         }
                     } catch (IOException x) {
                         // do something useful
@@ -149,7 +152,7 @@ public class Cliente extends ReceiverAdapter {
         keys.put(key, dir);
         if(!dir.toString().equals("Clientes/"+name)){
             String[] aux = dir.toString().split("Clientes/"+name+"/");
-            Arquivo arquivoAux = new Arquivo(null,aux[1],true);
+            Arquivo arquivoAux = new Arquivo(null,aux[1],true,100);
             Message msg = new Message(null, arquivoAux);
             channel.send(msg);
         }
@@ -164,5 +167,6 @@ public class Cliente extends ReceiverAdapter {
         }else System.out.println("Usuario existente");
         Cliente cliente = new Cliente(name);
         cliente.await();
+        sc.close();
     }
 }
