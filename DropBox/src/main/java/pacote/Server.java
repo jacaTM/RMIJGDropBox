@@ -42,17 +42,17 @@ public class Server extends ReceiverAdapter {
             if (arquivo.codigo == 100) {
                 if (arquivo.diretorio == true) {
                     File newFile = null;
-                    if(msg.src().toString().contains("Server")){
+                    if (msg.src().toString().contains("Server")) {
                         newFile = new File("Servidores/" + name + "/" + arquivo.nome);
-                    }else{
+                    } else {
                         newFile = new File("Servidores/" + name + "/" + msg.src() + "/" + arquivo.nome);
                     }
                     newFile.mkdirs();
                 } else {
                     File newFile = null;
-                    if(msg.src().toString().contains("Server")){
+                    if (msg.src().toString().contains("Server")) {
                         newFile = new File("Servidores/" + name + "/" + arquivo.nome);
-                    }else{
+                    } else {
                         newFile = new File("Servidores/" + name + "/" + msg.src() + "/" + arquivo.nome);
                     }
                     File diretorio = new File(newFile.getParent());
@@ -82,11 +82,11 @@ public class Server extends ReceiverAdapter {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                    }
+                }
             }
-        }else if(msg.getObject().toString().equals("Me enviem os arquivos")){
+        } else if (msg.getObject().toString().equals("Me enviem os arquivos")) {
             try {
-                sincronizarServidores(msg.src(), new File("Servidores/" + name+"/"));
+                sincronizarServidores(msg.src(), new File("Servidores/" + name + "/"));
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -94,6 +94,43 @@ public class Server extends ReceiverAdapter {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+        } else if (msg.getObject().toString().equals("Usuario entrou")) {
+            File caminho = new File("Servidores/" + name);
+            File[] afile = caminho.listFiles();
+            for (int i = 0; i < afile.length; i++) {
+                if (afile[i].getName().equals(msg.src().toString())) {
+                    try {
+                        enviarDadosCliente(msg.src(), new File("Servidores/" + name + "/" + msg.src()));
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    public void enviarDadosCliente(Address source, File diretorio) throws Exception {
+        File[] afile = diretorio.listFiles();
+        for(int i=0;i<afile.length;i++){
+            if(afile[i].isFile()){
+                FileInputStream inputStream = new FileInputStream(afile[i]);
+                byte[] bs = new byte[(int) afile[i].length()];
+                inputStream.read(bs);
+                String[] aux2 = afile[i].toString().split("Servidores/"+name+"/"+source+"/");
+                Arquivo aux = new Arquivo(bs, aux2[1], false,100);
+                Message msg = new Message(source,aux);
+                channel.send(msg);
+                inputStream.close();
+            }else{
+                enviarDadosCliente(source, afile[i]);
+            }
+        }
+        if(!diretorio.toString().equals("Servidores/"+name+"/"+source)){
+            String[] aux2 = diretorio.toString().split("Servidores/"+name+"/"+source+"/");
+            Arquivo aux3 = new Arquivo(null, aux2[1], true,100);
+            Message msg = new Message(source, aux3);
+            channel.send(msg);
         }
     }
 

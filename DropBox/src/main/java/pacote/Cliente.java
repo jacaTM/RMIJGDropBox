@@ -2,6 +2,8 @@ package pacote;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -40,6 +42,8 @@ public class Cliente extends ReceiverAdapter {
             channel.setName(name);
             channel.connect("ClienteServidor");
             channel.setReceiver(this);
+            Message msg = new Message(null,"Usuario entrou");
+            channel.send(msg);
             watching();
             channel.close();
         } catch (Exception e) {
@@ -47,7 +51,33 @@ public class Cliente extends ReceiverAdapter {
     }
 
     public void receive(Message msg) {
-        
+        if (msg.getObject() instanceof Arquivo && msg.src()!=channel.address()) {
+            Arquivo arquivo = msg.getObject();
+            if (arquivo.codigo == 100) {
+                if (arquivo.diretorio == true) {
+                    File newFile = null;
+                    newFile = new File("Clientes/"+arquivo.nome); 
+                    newFile.mkdirs();
+                } else {
+                    File newFile = null;
+                    newFile = new File("Clientes/"+arquivo.nome); 
+                    File diretorio = new File(newFile.getParent());
+                    diretorio.mkdirs();
+                    try {
+                        FileOutputStream outputStream = new FileOutputStream(newFile);
+                        byte[] bs = arquivo.arquivo;
+                        outputStream.write(bs, 0, bs.length);
+                        outputStream.close();
+                    } catch (FileNotFoundException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
     public void criarDiretorio(File diretorio) throws Exception {
